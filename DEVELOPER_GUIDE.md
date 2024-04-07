@@ -41,6 +41,13 @@ Integration tests will auto-start the docker image. To start it manually:
 docker run -d -p 9200:9200 -p 9600:9600 -e "discovery.type=single-node" opensearchproject/opensearch:latest
 ```
 
+##  Setting up environment variables
+
+These are some environment variables that can be helpful for local development and running tests -
+
+* `OPENSEARCH_URL` - The URL of the OpenSearch instance to run tests against. Default is `https://localhost:9200`.
+* `TEST_OPENSEARCH_NOFETCH` - Set to `true` to skip fetching the OpenSearch docker image.
+
 ## Running Tests
 
 Tests require a live instance of OpenSearch running in docker.

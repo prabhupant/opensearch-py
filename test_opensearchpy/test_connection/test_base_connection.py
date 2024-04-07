@@ -28,6 +28,7 @@
 import os
 import sys
 import warnings
+from unittest import SkipTest
 
 from opensearchpy.connection import Connection
 
@@ -42,6 +43,9 @@ from pytest import raises
 
 from opensearchpy import OpenSearch, serializer
 from opensearchpy.connection import connections
+from urllib.parse import urlparse
+
+OPENSEARCH_URL = os.environ.get("OPENSEARCH_URL", "https://admin:admin@localhost:9200")
 
 
 class TestBaseConnection(TestCase):
@@ -125,6 +129,9 @@ class TestBaseConnection(TestCase):
             assert Connection.default_ca_certs() == cert
 
     def test_ca_certs_ssl_cert_dir(self) -> None:
+        if not self.check_if_opensearch_url_has_https():
+            raise SkipTest("OpenSearch URL does not have https")
+
         cert = "/path/to/clientcert/dir"
         with MonkeyPatch().context() as monkeypatch:
             monkeypatch.setenv("SSL_CERT_DIR", cert)
@@ -133,9 +140,15 @@ class TestBaseConnection(TestCase):
     def test_ca_certs_certifi(self) -> None:
         import certifi
 
+        if not self.check_if_opensearch_url_has_https():
+            raise SkipTest("OpenSearch URL does not have https")
+
         assert Connection.default_ca_certs() == certifi.where()
 
     def test_no_ca_certs(self) -> None:
+        if not self.check_if_opensearch_url_has_https():
+            raise SkipTest("OpenSearch URL does not have https")
+
         with MonkeyPatch().context() as monkeypatch:
             monkeypatch.setitem(sys.modules, "certifi", None)
             assert Connection.default_ca_certs() is None
@@ -211,3 +224,9 @@ class TestBaseConnection(TestCase):
         c.create_connection("testing", hosts=["opensearch.com"])
 
         assert c.get_connection("testing").transport.serializer is serializer.serializer
+
+
+    @staticmethod
+    def check_if_opensearch_url_has_https():
+        parsed_url = urlparse(OPENSEARCH_URL)
+        return parsed_url.scheme == 'https'
